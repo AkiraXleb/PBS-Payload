@@ -13,14 +13,16 @@
  * pending hardware confirmation. Explicit 1440p/4K requests are unaffected.
  * FW10.01 is selected unconditionally because its supplied hardware log shows
  * the automatic 1440p request rejected on the first OpenVideo. The other pairs
- * are directly observed, not decoded HDR/4K enums. */
+ * are directly observed, not decoded HDR/4K enums.
+ * FW13.60 also needs the conservative profile when the mode is unavailable
+ * or differs from 0x14 only in the bits set by 0x14. */
 static inline int pbs_ps5_prefer_1080_before_open(
     uint32_t firmware, uint32_t video_mode) {
   return firmware == 0x10010000u ||
          firmware == 0x13420000u ||
          (firmware == 0x12400009u && video_mode == 0x140u) ||
          (firmware == 0x12700001u && video_mode == 0x144u) ||
-         (firmware == 0x13600007u && video_mode == 0x14u);
+         (firmware == 0x13600007u && (video_mode & ~0x14u) == 0u);
 }
 
 /* Successful STOP/ClearCallback/Terminate calls prove only that PBS released

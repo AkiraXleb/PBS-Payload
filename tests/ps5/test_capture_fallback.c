@@ -7,6 +7,11 @@ int main(void) {
   /* Bypass a known-rejected 1440p configuration before touching the encoder. */
   assert(pbs_ps5_prefer_1080_before_open(0x12700001u, 0x144u));
   assert(pbs_ps5_prefer_1080_before_open(0x13600007u, 0x14u));
+  assert(pbs_ps5_prefer_1080_before_open(0x13600007u, 0u));
+  assert(pbs_ps5_prefer_1080_before_open(0x13600007u, 0x4u));
+  assert(pbs_ps5_prefer_1080_before_open(0x13600007u, 0x10u));
+  assert(!pbs_ps5_prefer_1080_before_open(0x13600007u, 0x1u));
+  assert(!pbs_ps5_prefer_1080_before_open(0x13600007u, 0x100u));
   assert(pbs_ps5_prefer_1080_before_open(0x12400009u, 0x140u));
   assert(!pbs_ps5_prefer_1080_before_open(0x12400009u, 0x138u));
   assert(!pbs_ps5_prefer_1080_before_open(0x09400008u, 0x140u));
