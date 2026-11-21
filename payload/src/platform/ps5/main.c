@@ -22,6 +22,7 @@
 #include "common/config/config.h"
 #include "common/http/server.h"
 #include "common/input/controller.h"
+#include "common/log/log.h"
 #include "common/media/profiles.h"
 #include "common/process/inject.h"
 #include "platform/ps5/capture_fallback.h"
@@ -624,6 +625,27 @@ int main(int argc, char **argv) {
     notify("PBS: cannot create /data/pbs");
     return 1;
   }
+  /* Control-path log. Opened here, before the HTTP server, the controller and
+   * the worker start any thread, because the level is fixed at open time. The
+   * capture loop keeps recording through the problem index, not through this. */
+  pbs_log_open(PBS_DATA_DIR "/pbs.log",
+               config.log_level < 0 ? PBS_LOG_INFO : config.log_level, 0);
+  pbs_log_info("payload start revision=%s firmware=0x%08x controller=%d audio=%d",
+               PBS_PS5_RUNTIME_REVISION, kernel_get_fw_version(), controller_enabled, audio_mode);
+  if (config_status == 0) {
+    char summary[192];
+    pbs_config_describe(&config, summary, sizeof summary);   /* never prints the token */
+    pbs_log_info("config loaded rejected_lines=%d %s", config_notes.total, summary);
+    for (int n = 0; n < config_notes.stored; n++)
+      pbs_log_warn("config line %u: %s", config_notes.line[n], config_notes.message[n]);
+    if (config_notes.total > config_notes.stored)
+      pbs_log_warn("config %d further rejected lines not detailed",
+                   config_notes.total - config_notes.stored);
+  } else if (config_status < 0) {
+    pbs_log_warn("config file unreadable or larger than %d bytes; defaults used",
+                 PBS_CONFIG_MAX_BYTES);
+  }
+
   FILE *startup_report = open_report("inject.txt", "a");
   if (startup_report) {
     uint32_t firmware = kernel_get_fw_version();
